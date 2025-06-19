@@ -12,7 +12,7 @@ interface Config {
 }
 
 const config: Config = {
-  port: parseInt(process.env.PORT || '5001', 10),
+  port: parseInt(process.env.PORT || '5002', 10),
   database_url: process.env.DATABASE_URL!,
   jwt: {
     secret: process.env.JWT_SECRET!,

@@ -22,8 +22,6 @@ const validate =
             status: 'fail',
             errors: error.errors,
           });
-
-          return next(error);
         }
 
         return next(error);

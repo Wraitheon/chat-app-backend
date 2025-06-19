@@ -20,8 +20,12 @@ export const register_schema = z.object({
 
 export const login_schema = z.object({
   body: z.object({
-    email: z.string().email('A valid email is required'),
-    password: z.string().min(1, 'Password cannot be empty'),
+    identifier: z
+      .string({ required_error: 'Email or username is required' })
+      .min(1, 'Email or username cannot be empty'),
+    password: z
+      .string({ required_error: 'Password is required' })
+      .min(1, 'Password cannot be empty'),
   }),
 });
 
