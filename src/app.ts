@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import apiRoutes from './api/routes';
+import api_routes from './api/routes';
 // import { errorHandler } from './middleware/error.handler';
 
 const app = express();
@@ -13,7 +13,7 @@ app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
 // API Routes
-app.use('/api', apiRoutes);
+app.use('/api', api_routes);
 
 // // Global Error Handler
 // app.use(errorHandler);

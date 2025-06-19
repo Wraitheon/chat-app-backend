@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const registerSchema = z.object({
+export const register_schema = z.object({
   body: z.object({
     username: z
       .string({ required_error: 'Username is required' })
@@ -18,12 +18,12 @@ export const registerSchema = z.object({
   }),
 });
 
-export const loginSchema = z.object({
+export const login_schema = z.object({
   body: z.object({
     email: z.string().email('A valid email is required'),
     password: z.string().min(1, 'Password cannot be empty'),
   }),
 });
 
-export type RegisterInput = z.infer<typeof registerSchema>['body'];
-export type LoginInput = z.infer<typeof loginSchema>['body'];
+export type RegisterInput = z.infer<typeof register_schema>['body'];
+export type LoginInput = z.infer<typeof login_schema>['body'];

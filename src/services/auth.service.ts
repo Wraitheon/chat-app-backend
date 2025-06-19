@@ -19,13 +19,13 @@ export const register_user = async (input: RegisterInput) => {
 
   const password_hash = await bcrypt.hash(password, 10);
 
-  const insertQuery = `
+  const insert_query = `
     INSERT INTO "users" (username, email, password_hash, display_name)
     VALUES (:username, :email, :password_hash, :display_name)
     RETURNING id, username, email, display_name, display_picture_url, status_message;
   `;
 
-  const [results] = (await sequelize.query(insertQuery, {
+  const [results] = (await sequelize.query(insert_query, {
     replacements: {
       username,
       email,
@@ -44,7 +44,8 @@ export const register_user = async (input: RegisterInput) => {
   const token = jwt.sign(
     { id: new_user.id, email: new_user.email },
     config.jwt.secret,
-    { expiresIn: config.jwt.expiresIn } as jwt.SignOptions
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    { expiresIn: config.jwt.expires_in } as jwt.SignOptions
   );
 
   return { user: new_user, token };

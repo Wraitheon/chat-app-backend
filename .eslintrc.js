@@ -4,7 +4,7 @@ module.exports = {
     'eslint:recommended',
     'airbnb-base',
     'plugin:@typescript-eslint/recommended',
-    'plugin:prettier/recommended',
+    'prettier',
   ],
   plugins: ['@typescript-eslint'],
   env: {
@@ -14,11 +14,13 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
+    project: require.resolve('./tsconfig.json'),
   },
   settings: {
     'import/resolver': {
-      node: {
-        extensions: ['.js', '.ts'],
+      typescript: {
+        alwaysTryTypes: true,
+        project: './tsconfig.json',
       },
     },
   },
@@ -33,18 +35,19 @@ module.exports = {
         jsx: 'never',
       },
     ],
-
-    // Case
     camelcase: 'off',
     '@typescript-eslint/naming-convention': [
       'error',
       {
         selector: 'default',
         format: ['snake_case'],
+        leadingUnderscore: 'allow',
+        trailingUnderscore: 'allow',
       },
       {
         selector: 'variableLike',
         format: ['snake_case'],
+        leadingUnderscore: 'allow',
       },
       {
         selector: 'memberLike',
@@ -53,15 +56,51 @@ module.exports = {
       },
       {
         selector: 'typeLike',
-        format: ['PascalCase'], // Allow PascalCase for types, interfaces, classes
+        format: ['PascalCase'],
+      },
+      {
+        selector: 'enumMember',
+        format: ['UPPER_CASE'],
+      },
+    ],
+    'no-console': 'off',
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
       },
     ],
   },
   overrides: [
     {
-      files: ['*.ts'],
+      files: ['**/*.ts'],
       rules: {
         '@typescript-eslint/ban-ts-comment': 'off',
+        'import/prefer-default-export': 'off',
+      },
+    },
+    {
+      files: ['**/*.js'],
+      parser: 'espree', // or '@babel/eslint-parser'
+      parserOptions: {
+        ecmaVersion: 2021,
+        sourceType: 'module',
+      },
+      rules: {
+        '@typescript-eslint/no-var-requires': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
+        '@typescript-eslint/naming-convention': 'off',
+        'no-undef': 'off',
+        'import/no-extraneous-dependencies': 'off',
+      },
+    },
+    {
+      files: ['.eslint.js', '.eslintrc.js', '*.config.js', '*.config.ts', '.sequelizerc'],
+      rules: {
+        '@typescript-eslint/no-var-requires': 'off',
+        'import/no-extraneous-dependencies': 'off',
+        '@typescript-eslint/naming-convention': 'off',
       },
     },
   ],

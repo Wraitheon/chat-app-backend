@@ -3,7 +3,7 @@ import { register_user } from '../../services/auth.service';
 import { RegisterInput } from '../../schemas/auth.schema';
 
 export const register_handler = async (
-  req: Request<{}, {}, RegisterInput>,
+  req: Request<RegisterInput>,
   res: Response,
   next: NextFunction
 ) => {
