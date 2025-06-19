@@ -33,22 +33,32 @@ export const login_handler = async (
   next: NextFunction
 ) => {
   try {
-    const result = await login_user(req.body);
+    const { user, token } = await login_user(req.body);
 
-    res.status(201).json({
+    res.cookie('token', token, {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      httpOnly: true,
+      secure: false,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      maxAge: 24 * 60 * 60 * 1000,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      sameSite: 'strict',
+    });
+
+    res.status(200).json({
       status: 'success',
-      data: result,
+      data: { user },
     });
   } catch (err) {
     const error = err as Error;
     if (error.message === 'Invalid credentials') {
-      res.status(409).json({
+      res.status(401).json({
         status: 'fail',
-        message: 'Invalid credentials. Please check your email/username and password.',
+        message: 'Invalid credentials. Please check your identifier and password.',
       });
       return;
     }
 
     next(error);
   }
-}
+};

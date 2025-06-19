@@ -70,7 +70,16 @@ export const login_user = async (input: LoginInput) => {
   }
 
   const find_user_query = `
-  SELECT * FROM "users" WHERE ${where_clause}
+    SELECT 
+      id, 
+      username, 
+      email, 
+      display_name, 
+      display_picture_url, 
+      status_message, 
+      password_hash 
+    FROM "users" 
+    WHERE ${where_clause}
   `;
 
   const [user] = await sequelize.query<UserWithPassword>(find_user_query, {
