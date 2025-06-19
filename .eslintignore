@@ -1,0 +1,11 @@
+# Ignore node_modules (redundant, but explicit)
+node_modules/
+
+# Ignore compiled output
+dist/
+
+# Ignore Sequelize auto-generated JS migration files
+database/migrations/
+
+# Ignore dotenv or other config files
+.env
