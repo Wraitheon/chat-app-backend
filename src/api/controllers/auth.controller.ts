@@ -47,7 +47,7 @@ export const login_handler = async (
 
     res.status(200).json({
       status: 'success',
-      data: { user },
+      data: { user, token },
     });
   } catch (err) {
     const error = err as Error;
