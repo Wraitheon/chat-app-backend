@@ -16,6 +16,7 @@ import {
   remove_member_handler,
   mark_as_read_handler,
 } from '../controllers/chat.controller';
+import messages_routes from './messages.routes';
 
 const router = express.Router();
 
@@ -25,12 +26,14 @@ router.post('/', validate(create_chat_schema), create_chat_handler);
 
 router.get('/', get_chats_handler);
 
-router.put('/:chatId', validate(update_chat_schema), update_chat_handler);
+router.put('/:chat_id', validate(update_chat_schema), update_chat_handler);
 
-router.post('/:chatId/members', validate(add_member_schema), add_member_handler);
+router.put('/:chat_id/members', validate(add_member_schema), add_member_handler);
 
-router.delete('/:chatId/members/:userId', validate(remove_member_schema), remove_member_handler);
+router.delete('/:chat_id/members/:user_id', validate(remove_member_schema), remove_member_handler);
 
-router.post('/:chatId/read', validate(mark_as_read_schema), mark_as_read_handler);
+router.post('/:chat_id/read', validate(mark_as_read_schema), mark_as_read_handler);
+
+router.use('/:chat_id/messages', messages_routes);
 
 export default router;

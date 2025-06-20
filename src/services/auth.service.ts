@@ -4,20 +4,7 @@ import { QueryTypes } from 'sequelize';
 import { RegisterInput, LoginInput } from '../schemas/auth.schema';
 import sequelize from '../lib/sequelize';
 import config from '../config';
-
-
-type UserQueryResult = {
-  id: string;
-  username: string;
-  email: string;
-  display_name: string;
-  display_picture_url: string | null;
-  status_message: string | null;
-}
-
-type UserWithPassword = UserQueryResult & {
-  password_hash: string;
-};
+import { User, UserWithPassword } from '../types/user.types';
 
 export const register_user = async (input: RegisterInput) => {
   const { username, email, password, display_name } = input;
@@ -38,7 +25,7 @@ export const register_user = async (input: RegisterInput) => {
       display_name,
     },
     type: QueryTypes.INSERT,
-  })) as unknown as [UserQueryResult[]];
+  })) as unknown as [User[]];
 
   const new_user = results[0];
 

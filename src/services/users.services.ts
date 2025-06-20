@@ -54,11 +54,11 @@ export const update_user_profile = async (id: string, input: UpdateUserInput): P
   }
 
   const update_query = `
-  UPDATE "users"
-  SET ${fields_to_update.join(', ')}, updated_at = NOW()
-  WHERE id = :user_id
-  RETURNING id, username, email, display_name, 
-  display_picture_url, status_message, created_at;
+    UPDATE "users"
+    SET ${fields_to_update.join(', ')}, updated_at = NOW()
+    WHERE id = :user_id
+    RETURNING id, username, email, display_name, 
+    display_picture_url, status_message, created_at;
   `;
 
   const updated_user = await sequelize.query<UserProfile>(update_query, {

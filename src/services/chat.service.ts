@@ -5,34 +5,7 @@ import {
   UpdateChatInput,
   AddMemberInput,
 } from '../schemas/chat.schema';
-
-type ChatListItem = {
-  id: string;
-  type: 'direct' | 'group';
-  group_name: string | null;
-  group_avatar_url: string | null;
-  // Details about the other member in a direct chat
-  other_member_id?: string;
-  other_member_username?: string;
-  other_member_display_name?: string;
-  other_member_avatar?: string | null;
-  // Last message details
-  last_message_content: string | null;
-  last_message_sender: string | null;
-  last_message_at: Date | null;
-  // Unread count for the current user
-  unread_count: number;
-};
-
-type Chat = {
-  id: string;
-  type: 'direct' | 'group';
-  group_name: string | null;
-  group_avatar_url: string | null;
-  creator_id: string | null;
-  created_at: Date;
-  updated_at: Date;
-};
+import { ChatListItem, Chat } from '../types/chats.types';
 
 export const create_chat = async (creator_id: string, input: CreateChatInput): Promise<Chat> => {
   const { members, group_name } = input;
@@ -111,42 +84,52 @@ export const get_user_chats = async (user_id: string): Promise<ChatListItem[]> =
   // Orders chats by latest activity
   const query = `
     WITH LastMessages AS (
-      -- This CTE finds the latest message for each chat.
-      SELECT
-        chat_id,
-        content,
-        sender_id,
-        created_at,
-        ROW_NUMBER() OVER(PARTITION BY chat_id ORDER BY created_at DESC) as rn
-      FROM messages
+  SELECT
+    chat_id,
+    text_content,  -- Correct column name from messages table
+    sender_id,
+    created_at,
+    ROW_NUMBER() OVER(PARTITION BY chat_id ORDER BY created_at DESC) as rn
+  FROM messages
+)
+SELECT
+  c.id,
+  c.type,
+  c.group_name,
+  c.group_avatar_url,
+  lm.text_content AS last_message_content,  -- Updated to use text_content
+  sender.username AS last_message_sender,
+  lm.created_at AS last_message_at,
+  other_member.id AS other_member_id,
+  other_member.username AS other_member_username,
+  other_member.display_name AS other_member_display_name,
+  other_member.display_picture_url AS other_member_avatar,
+  
+  -- Fixed unread count subquery
+  (
+    SELECT COUNT(*)
+    FROM messages m
+    WHERE m.chat_id = c.id 
+    AND (
+      cm.last_read_message_id IS NULL 
+      OR m.created_at > (
+        SELECT created_at 
+        FROM messages 
+        WHERE id = cm.last_read_message_id
+      )
     )
-    SELECT
-      c.id,
-      c.type,
-      c.group_name,
-      c.group_avatar_url,
-      lm.content AS last_message_content,
-      us.username AS last_message_sender,
-      lm.created_at AS last_message_at,
-      -- For DMs, we need to find the details of the "other" person in the chat.
-      other_member.id AS other_member_id,
-      other_member.username AS other_member_username,
-      other_member.display_name AS other_member_display_name,
-      other_member.display_picture_url AS other_member_avatar,
-      -- This subquery calculates the number of unread messages for the current user.
-      (SELECT COUNT(*) FROM messages m WHERE m.chat_id = c.id AND m.created_at > COALESCE(cm.last_read_at, '1970-01-01')) AS unread_count
-    FROM chats c
-    -- Join to get the current user's membership details (like last_read_at)
-    INNER JOIN chat_members cm ON c.id = cm.chat_id
-    -- Join to get the last message details from our CTE
-    LEFT JOIN LastMessages lm ON c.id = lm.chat_id AND lm.rn = 1
-    -- Join to get the sender's username for the last message
-    LEFT JOIN users us ON lm.sender_id = us.id
-    -- This double join is to find the other member in a DM
-    LEFT JOIN chat_members other_cm ON c.id = other_cm.chat_id AND other_cm.user_id != :user_id AND c.type = 'direct'
-    LEFT JOIN users other_member ON other_cm.user_id = other_member.id
-    WHERE cm.user_id = :user_id
-    ORDER BY lm.created_at DESC NULLS LAST;
+  ) AS unread_count
+
+FROM chats c
+INNER JOIN chat_members cm ON c.id = cm.chat_id
+LEFT JOIN LastMessages lm ON c.id = lm.chat_id AND lm.rn = 1
+LEFT JOIN users sender ON lm.sender_id = sender.id
+LEFT JOIN chat_members other_cm ON c.id = other_cm.chat_id 
+  AND other_cm.user_id != :user_id 
+  AND c.type = 'direct'
+LEFT JOIN users other_member ON other_cm.user_id = other_member.id
+WHERE cm.user_id = :user_id
+ORDER BY lm.created_at DESC NULLS LAST;
   `;
   return sequelize.query<ChatListItem>(query, {
     replacements: { user_id },
@@ -197,8 +180,14 @@ export const remove_chat_member = async (chat_id: string, user_id: string): Prom
 export const mark_chat_as_read = async (chat_id: string, user_id: string): Promise<void> => {
   const query = `
       UPDATE "chat_members"
-      SET last_read_at = NOW()
-      WHERE chat_id = :chat_id AND user_id = :user_id;
+SET last_read_message_id = (
+  SELECT id 
+  FROM messages 
+  WHERE chat_id = :chat_id 
+  ORDER BY created_at DESC 
+  LIMIT 1
+)
+WHERE chat_id = :chat_id AND user_id = :user_id;
     `;
   await sequelize.query(query, { replacements: { chat_id, user_id }, type: QueryTypes.UPDATE });
 };
