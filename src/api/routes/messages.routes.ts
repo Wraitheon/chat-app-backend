@@ -1,6 +1,6 @@
 import express from 'express';
 import { require_auth } from '../../middleware/auth.middleware';
-import validate from '../../middleware/validate.request';
+import validate from '../../utils/validate.request';
 import { get_messages_schema } from '../../schemas/message.schema';
 import { get_messages_handler } from '../controllers/messages.controller';
 

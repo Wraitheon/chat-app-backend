@@ -1,6 +1,6 @@
 import express from 'express';
 import { require_auth } from '../../middleware/auth.middleware';
-import validate from '../../middleware/validate.request';
+import validate from '../../utils/validate.request';
 import {
   create_chat_schema,
   update_chat_schema,

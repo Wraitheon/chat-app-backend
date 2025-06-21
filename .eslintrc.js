@@ -50,6 +50,10 @@ module.exports = {
         leadingUnderscore: 'allow',
       },
       {
+        selector: 'typeLike',
+        format: ['PascalCase'],
+      },
+      {
         selector: 'memberLike',
         format: ['snake_case'],
         leadingUnderscore: 'allow',
@@ -62,6 +66,10 @@ module.exports = {
         selector: 'enumMember',
         format: ['UPPER_CASE'],
       },
+      {
+        selector: 'import',
+        format: ['PascalCase', 'snake_case'],
+      }
     ],
     'no-console': 'off',
     '@typescript-eslint/no-unused-vars': [

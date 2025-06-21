@@ -1,16 +1,8 @@
 import { QueryTypes } from "sequelize";
 import sequelize from "../lib/sequelize";
 import { UpdateUserInput, SearchUsersQuery } from "../schemas/user.schema";
-
-type UserProfile = {
-  id: string;
-  username: string;
-  email: string;
-  display_name: string;
-  display_picture_url: string | null;
-  status_message: string | null;
-  created_at: string;
-};
+import { UserProfile } from '../types/user.types';
+import { AppError } from "../utils/AppError";
 
 export const get_user_by_id = async (id: string): Promise<UserProfile | null> => {
   const find_user_query = `
@@ -50,7 +42,11 @@ export const update_user_profile = async (id: string, input: UpdateUserInput): P
   }
 
   if (fields_to_update.length === 0) {
-    throw new Error('No valid fields provided for update.');
+    throw new AppError(
+      'No valid fields provided for update. Please supply a display_name, status_message, or display_picture_url.',
+      400,
+      'NO_UPDATE_FIELDS_PROVIDED'
+    );
   }
 
   const update_query = `
@@ -68,7 +64,11 @@ export const update_user_profile = async (id: string, input: UpdateUserInput): P
   });
 
   if (!updated_user) {
-    throw new Error('Failed to update user profile.');
+    throw new AppError(
+      'No user found with the provided ID.',
+      404,
+      'USER_NOT_FOUND'
+    );
   }
 
   return updated_user;

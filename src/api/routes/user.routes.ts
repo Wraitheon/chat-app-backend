@@ -1,6 +1,6 @@
 import express from 'express';
 import { require_auth } from '../../middleware/auth.middleware';
-import validate from '../../middleware/validate.request';
+import validate from '../../utils/validate.request';
 import { update_user_schema, search_user_schema } from '../../schemas/user.schema';
 import {
   get_me_handler,

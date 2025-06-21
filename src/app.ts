@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookie_parser from 'cookie-parser';
 import api_routes from './api/routes';
+import error_handler from './middleware/error.middleware';
 // import { errorHandler } from './middleware/error.handler';
 
 const app = express();
@@ -19,6 +20,7 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
 // API Routes
 app.use('/api', api_routes);
+app.use(error_handler);
 
 // // Global Error Handler
 // app.use(errorHandler);

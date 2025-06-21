@@ -5,6 +5,7 @@ import { RegisterInput, LoginInput } from '../schemas/auth.schema';
 import sequelize from '../lib/sequelize';
 import config from '../config';
 import { User, UserWithPassword } from '../types/user.types';
+import { AppError } from '../utils/AppError';
 
 export const register_user = async (input: RegisterInput) => {
   const { username, email, password, display_name } = input;
@@ -30,7 +31,11 @@ export const register_user = async (input: RegisterInput) => {
   const new_user = results[0];
 
   if (!new_user) {
-    throw new Error('User creation failed, no data returned.');
+    throw new AppError(
+      'User creation failed, no data returned from database.',
+      500,
+      'USER_CREATION_FAILED'
+    );
   }
 
   const token = jwt.sign(
@@ -74,14 +79,12 @@ export const login_user = async (input: LoginInput) => {
     type: QueryTypes.SELECT
   });
 
-  if (!user) {
-    throw new Error('Invalid credentials');
-  }
-
-  const is_password_valid = await bcrypt.compare(password, user.password_hash);
-
-  if (!is_password_valid) {
-    throw new Error('Invalid credentials');
+  if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+    throw new AppError(
+      'Invalid username or password',
+      401,
+      'INVALID_CREDENTIALS'
+    );
   }
 
   const token = jwt.sign(
