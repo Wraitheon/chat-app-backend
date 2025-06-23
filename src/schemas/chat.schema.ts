@@ -52,10 +52,12 @@ export const mark_as_read_schema = z.object({
   params: z.object({
     chat_id: z.string().uuid({ message: 'Chat ID must be a valid UUID.' }),
   }),
-  // If you decide to require last_message_id in the body:
-  // body: z.object({
-  //   last_message_id: z.string().uuid({ message: 'Last message ID must be a valid UUID.' }),
-  // })
+});
+
+export const get_chat_details_schema = z.object({
+  params: z.object({
+    chat_id: z.string().uuid({ message: 'Chat ID must be a valid UUID.' }),
+  }),
 });
 
 export type CreateChatInput = z.infer<typeof create_chat_schema>['body'];

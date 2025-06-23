@@ -22,3 +22,12 @@ export type Chat = {
   created_at: Date;
   updated_at: Date;
 };
+
+export type ChatMemberInfo = {
+  id: string;
+  display_name: string;
+};
+
+export type ChatWithMembers = Chat & {
+  members: ChatMemberInfo[];
+};

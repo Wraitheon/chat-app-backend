@@ -1,14 +1,17 @@
 import express from 'express';
+import { require_auth } from '../../middleware/auth.middleware';
+
 import auth_routes from './auth.routes';
-import user_routes from './user.routes'
-import chat_routes from './chat.routes'
-import messages_routes from './messages.routes';
+import user_routes from './user.routes';
+import chat_routes from './chat.routes';
 
-const router = express.Router();
+const api_router = express.Router();
 
-router.use('/auth', auth_routes);
-router.use('/users', user_routes);
-router.use('/chats', chat_routes);
-router.use('/:chat_id/messages', messages_routes);
+api_router.use('/auth', auth_routes);
 
-export default router;
+api_router.use(require_auth);
+
+api_router.use('/users', user_routes);
+api_router.use('/chats', chat_routes);
+
+export default api_router;

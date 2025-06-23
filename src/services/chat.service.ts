@@ -5,7 +5,12 @@ import {
   UpdateChatInput,
   AddMemberInput,
 } from '../schemas/chat.schema';
-import { ChatListItem, Chat } from '../types/chats.types';
+import {
+  ChatListItem,
+  Chat,
+  ChatWithMembers,
+  ChatMemberInfo,
+} from '../types/chats.types';
 import { AppError } from '../utils/AppError';
 
 export const get_member_role = async (user_id: string, chat_id: string): Promise<'admin' | 'member' | null> => {
@@ -232,3 +237,37 @@ export const mark_chat_as_read = async (chat_id: string, user_id: string): Promi
   await sequelize.query(query, { replacements: { chat_id, user_id }, type: QueryTypes.UPDATE });
 };
 
+export const get_chat_details = async (
+  chat_id: string,
+  user_id: string
+): Promise<ChatWithMembers> => {
+  // 1. Authorization: Ensure the user is a member of the chat.
+  const role = await get_member_role(user_id, chat_id);
+  if (!role) {
+    throw new AppError('Chat not found or you do not have permission to view it.', 404, 'CHAT_NOT_FOUND_OR_NO_ACCESS');
+  }
+
+  // 2. Fetch Chat Details: Get the main chat object.
+  const get_chat_query = 'SELECT * FROM "chats" WHERE id = :chat_id;';
+  const [chat] = await sequelize.query<Chat>(get_chat_query, {
+    replacements: { chat_id },
+    type: QueryTypes.SELECT,
+  });
+
+  if (!chat) { throw new AppError('Chat not found.', 404, 'CHAT_NOT_FOUND'); }
+
+  // 3. Fetch Member Details: Get the list of all members.
+  const get_members_query = `
+    SELECT u.id, u.display_name
+    FROM users AS u
+    INNER JOIN chat_members AS cm ON u.id = cm.user_id
+    WHERE cm.chat_id = :chat_id;
+  `;
+  const members = await sequelize.query<ChatMemberInfo>(get_members_query, {
+    replacements: { chat_id },
+    type: QueryTypes.SELECT,
+  });
+
+  // 4. Assemble and return the complete object.
+  return { ...chat, members };
+};
