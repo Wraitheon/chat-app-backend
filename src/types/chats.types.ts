@@ -26,8 +26,14 @@ export type Chat = {
 export type ChatMemberInfo = {
   id: string;
   display_name: string;
+  display_picture_url: string;
 };
 
 export type ChatWithMembers = Chat & {
   members: ChatMemberInfo[];
+};
+
+export type ChatUpdatePayload = {
+  group_name?: string;
+  group_avatar_url?: string;
 };

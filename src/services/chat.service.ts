@@ -2,7 +2,6 @@ import { QueryTypes } from 'sequelize';
 import sequelize from '../lib/sequelize';
 import {
   CreateChatInput,
-  UpdateChatInput,
   AddMemberInput,
 } from '../schemas/chat.schema';
 import {
@@ -10,6 +9,7 @@ import {
   Chat,
   ChatWithMembers,
   ChatMemberInfo,
+  ChatUpdatePayload
 } from '../types/chats.types';
 import { AppError } from '../utils/AppError';
 
@@ -101,7 +101,7 @@ export const get_user_chats = async (user_id: string): Promise<ChatListItem[]> =
     WITH LastMessages AS (
     SELECT
       chat_id,
-      text_content,  -- Correct column name from messages table
+      text_content,
       sender_id,
       created_at,
       ROW_NUMBER() OVER(PARTITION BY chat_id ORDER BY created_at DESC) as rn
@@ -112,7 +112,7 @@ export const get_user_chats = async (user_id: string): Promise<ChatListItem[]> =
     c.type,
     c.group_name,
     c.group_avatar_url,
-    lm.text_content AS last_message_content,  -- Updated to use text_content
+    lm.text_content AS last_message_content,
     sender.username AS last_message_sender,
     lm.created_at AS last_message_at,
     other_member.id AS other_member_id,
@@ -120,7 +120,6 @@ export const get_user_chats = async (user_id: string): Promise<ChatListItem[]> =
     other_member.display_name AS other_member_display_name,
     other_member.display_picture_url AS other_member_avatar,
     
-    -- Fixed unread count subquery
     (
       SELECT COUNT(*)
       FROM messages m
@@ -152,7 +151,10 @@ export const get_user_chats = async (user_id: string): Promise<ChatListItem[]> =
   });
 };
 
-export const update_group_chat = async (chat_id: string, requester_id: string, input: UpdateChatInput): Promise<Chat> => {
+export const update_group_chat = async (
+  chat_id: string,
+  requester_id: string,
+  update_payload: ChatUpdatePayload): Promise<Chat> => {
   // --- Authorization Check ---
   const requester_role = await get_member_role(requester_id, chat_id);
   if (requester_role !== 'admin') {
@@ -160,15 +162,15 @@ export const update_group_chat = async (chat_id: string, requester_id: string, i
   }
 
   const fields_to_update: string[] = [];
-  const replacements: Partial<Record<keyof UpdateChatInput | 'chat_id', string | null>> = { chat_id };
+  const replacements: Partial<Record<keyof ChatUpdatePayload | 'chat_id', string | null>> = { chat_id };
 
-  if (input.group_name) {
+  if (update_payload.group_name) {
     fields_to_update.push('group_name = :group_name');
-    replacements.group_name = input.group_name;
+    replacements.group_name = update_payload.group_name;
   }
-  if (input.group_avatar_url) {
+  if (update_payload.group_avatar_url) {
     fields_to_update.push('group_avatar_url = :group_avatar_url');
-    replacements.group_avatar_url = input.group_avatar_url;
+    replacements.group_avatar_url = update_payload.group_avatar_url;
   }
 
   if (fields_to_update.length === 0) {
@@ -241,13 +243,11 @@ export const get_chat_details = async (
   chat_id: string,
   user_id: string
 ): Promise<ChatWithMembers> => {
-  // 1. Authorization: Ensure the user is a member of the chat.
   const role = await get_member_role(user_id, chat_id);
   if (!role) {
     throw new AppError('Chat not found or you do not have permission to view it.', 404, 'CHAT_NOT_FOUND_OR_NO_ACCESS');
   }
 
-  // 2. Fetch Chat Details: Get the main chat object.
   const get_chat_query = 'SELECT * FROM "chats" WHERE id = :chat_id;';
   const [chat] = await sequelize.query<Chat>(get_chat_query, {
     replacements: { chat_id },
@@ -256,9 +256,8 @@ export const get_chat_details = async (
 
   if (!chat) { throw new AppError('Chat not found.', 404, 'CHAT_NOT_FOUND'); }
 
-  // 3. Fetch Member Details: Get the list of all members.
   const get_members_query = `
-    SELECT u.id, u.display_name
+    SELECT u.id, u.display_name, u.display_picture_url
     FROM users AS u
     INNER JOIN chat_members AS cm ON u.id = cm.user_id
     WHERE cm.chat_id = :chat_id;
@@ -268,6 +267,23 @@ export const get_chat_details = async (
     type: QueryTypes.SELECT,
   });
 
-  // 4. Assemble and return the complete object.
   return { ...chat, members };
+};
+
+export const is_user_member_of_chat = async (chat_id: string, user_id: string): Promise<boolean> => {
+  const query = `
+    SELECT 1 
+    FROM "chat_members" 
+    WHERE chat_id = :chat_id AND user_id = :user_id 
+    LIMIT 1;
+  `;
+
+  const [result] = await sequelize.query(query, {
+    replacements: { chat_id, user_id },
+    type: QueryTypes.SELECT,
+  });
+
+  // If a row is found, the result will be an object like [{ '?column?': 1 }].
+  // The !! operator converts this truthy value to `true`, and a falsy `undefined` to `false`.
+  return !!result;
 };

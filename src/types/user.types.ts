@@ -7,10 +7,16 @@ export type User = {
   status_message: string | null;
 };
 
+export type UpdateProfileData = {
+  display_name?: string;
+  status_message?: string;
+  display_picture_url?: string;
+};
+
 export type UserWithPassword = User & {
   password_hash: string;
 };
 
 export type UserProfile = User & {
-  created_at: Date; // Note: In your original code this was a string, Date is more accurate.
+  created_at: Date;
 };

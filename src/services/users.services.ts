@@ -1,13 +1,13 @@
 import { QueryTypes } from "sequelize";
 import sequelize from "../lib/sequelize";
-import { UpdateUserInput, SearchUsersQuery } from "../schemas/user.schema";
-import { UserProfile } from '../types/user.types';
+import { SearchUsersQuery } from "../schemas/user.schema";
+import { UserProfile, UpdateProfileData } from '../types/user.types';
 import { AppError } from "../utils/AppError";
 
 export const get_user_by_id = async (id: string): Promise<UserProfile | null> => {
   const find_user_query = `
   SELECT id, username, email, display_name,
-  display_picture_url, status_message
+  display_picture_url, status_message, created_at
   FROM "users"
   WHERE id = :id
   `;
@@ -20,11 +20,11 @@ export const get_user_by_id = async (id: string): Promise<UserProfile | null> =>
   return user || null;
 }
 
-export const update_user_profile = async (id: string, input: UpdateUserInput): Promise<UserProfile> => {
+export const update_user_profile = async (id: string, input: UpdateProfileData): Promise<UserProfile> => {
   const { display_name, status_message, display_picture_url } = input;
 
   const fields_to_update: string[] = [];
-  const replacements: Partial<Record<keyof UpdateUserInput | 'user_id', string | null>> = {
+  const replacements: Partial<Record<keyof UpdateProfileData | 'user_id', string | null>> = {
     user_id: id,
   };
 
@@ -100,3 +100,26 @@ export const search_for_users = async (current_user_id: string, query: SearchUse
 
   return users;
 };
+
+type UserTypingDetails = { id: string; display_name: string };
+
+/**
+ * Fetches minimal user details (id and display name) required for socket events.
+ * This is more efficient than get_user_by_id for tasks like the "is typing" indicator.
+ * @param user_id The ID of the user to fetch.
+ * @returns An object with the user's id and display_name, or null if not found.
+ */
+export const get_user_details = async (user_id: string): Promise<UserTypingDetails | null> => {
+  const query = `
+    SELECT id, display_name 
+    FROM "users" 
+    WHERE id = :user_id;
+  `;
+
+  const [user] = await sequelize.query<UserTypingDetails>(query, {
+    replacements: { user_id },
+    type: QueryTypes.SELECT,
+  });
+
+  return user || null;
+}

@@ -9,14 +9,15 @@ import {
   get_chat_details_handler,
 } from '../controllers/chat.controller';
 import messages_routes from './messages.routes';
+import { upload_picture } from '../../middleware/upload.middleware';
 
 const router = express.Router();
 
 router.get('/:chat_id', get_chat_details_handler);
 router.post('/', create_chat_handler);
 router.get('/', get_chats_handler);
-router.put('/:chat_id', update_chat_handler);
-router.put('/:chat_id/members', add_member_handler);
+router.patch('/:chat_id', upload_picture.single('group_avatar'), update_chat_handler);
+router.patch('/:chat_id/members', add_member_handler);
 router.delete('/:chat_id/members/:user_id', remove_member_handler);
 router.post('/:chat_id/read', mark_as_read_handler);
 

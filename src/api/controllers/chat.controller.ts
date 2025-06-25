@@ -12,6 +12,7 @@ import {
 } from '../../schemas/chat.schema';
 import { send_success } from '../../utils/response.handler';
 import { AppError } from '../../utils/AppError';
+import { ChatUpdatePayload } from '../../types/chats.types';
 
 export const create_chat_handler = async (
   req: Request<Record<string, never>, unknown, CreateChatInput, ParsedQs>,
@@ -38,7 +39,7 @@ export const get_chats_handler = async (req: Request, res: Response, next: NextF
     const user_id = req.user!.id;
     const chats = await chat_service.get_user_chats(user_id);
 
-    send_success(res, 200, { chats });
+    send_success(res, 200, chats);
   } catch (error) {
     next(error);
   }
@@ -48,23 +49,38 @@ export const update_chat_handler = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
-    const { params, body: update_data } = await update_chat_schema.parseAsync({
+    const { params, body } = await update_chat_schema.parseAsync({
       params: req.params,
       body: req.body,
     });
 
-    if (Object.keys(update_data).length === 0) {
+    // --- THE FIX ---
+    // Create an object that matches the `ChatUpdatePayload` type.
+    // It starts with the text fields from the validated body.
+    const payload_for_service: ChatUpdatePayload = {
+      ...body
+    };
+
+    // If a file was uploaded, add its path to the payload.
+    if (req.file) {
+      payload_for_service.group_avatar_url = `/images/profiles/${req.file.filename}`;
+    }
+    // ----------------
+
+    // Now check if the final payload object is empty.
+    if (Object.keys(payload_for_service).length === 0) {
       next(new AppError('No update data provided.', 400, 'BAD_REQUEST'));
-      return;
     }
 
     const requester_id = req.user!.id;
+
+    // Call the service with the correctly typed payload object.
     const updated_chat = await chat_service.update_group_chat(
       params.chat_id,
       requester_id,
-      update_data
+      payload_for_service, // This now matches what the service expects
     );
 
     send_success(res, 200, updated_chat);
@@ -148,7 +164,7 @@ export const get_chat_details_handler = async (
     const user_id = req.user!.id;
     const chat_details = await chat_service.get_chat_details(params.chat_id, user_id);
 
-    send_success(res, 200, { chat: chat_details });
+    send_success(res, 200, chat_details);
   } catch (error) {
     next(error);
   }

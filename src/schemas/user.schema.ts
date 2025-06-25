@@ -11,10 +11,6 @@ export const update_user_schema = z.object({
       .string()
       .max(100, 'Status must be 100 characters or less.')
       .optional(),
-    display_picture_url: z
-      .string()
-      .url({ message: 'Must be a valid URL.' })
-      .optional(),
   }),
 });
 

@@ -16,7 +16,7 @@ export const get_messages_handler = async (
     const user_id = req.user!.id;
     const messages = await messages_service.get_chat_messages(params.chat_id, user_id);
 
-    send_success(res, 200, { messages });
+    send_success(res, 200, messages);
   } catch (error) {
     next(error);
   }

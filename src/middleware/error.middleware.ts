@@ -26,7 +26,7 @@ const send_error = (err: AppError, res: Response) => {
   return res.status(err.statusCode).json(response_body);
 };
 
-const error_handler = (err: unknown, req: Request, res: Response, _next: NextFunction) => {
+const error_handler = (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   let processed_error: AppError;
 
   // Sequelize error

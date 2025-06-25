@@ -48,3 +48,17 @@ export const login_handler = async (
     next(err);
   }
 };
+
+export const logout_handler = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    res.clearCookie('token');
+
+    send_success(res, 200, { message: 'Logged out successfully.' });
+  } catch (err) {
+    next(err);
+  }
+};

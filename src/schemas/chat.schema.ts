@@ -23,10 +23,6 @@ export const update_chat_schema = z.object({
       .min(1, 'Group name cannot be empty.')
       .max(100, 'Group name must be 100 characters or less.')
       .optional(),
-    group_avatar_url: z
-      .string()
-      .url({ message: 'Avatar must be a valid URL.' })
-      .optional(),
   }).refine(data => Object.keys(data).length > 0, {
     message: "At least one field (group_name or group_avatar_url) must be provided for an update."
   }),
