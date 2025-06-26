@@ -7,10 +7,6 @@ type JWTPayload = {
   email: string;
 };
 
-// We disable these ESLint rules because extending existing global types (like Express.Request) 
-// must be done using `declare global` and `namespace`, which would otherwise be flagged.
-// `no-shadow` is disabled because `Request` is being redefined inside the namespace 
-// to merge with the existing Express type, not to shadow it.
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {

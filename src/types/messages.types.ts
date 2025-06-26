@@ -2,7 +2,8 @@ export type MessageWithSender = {
   id: string;
   chat_id: string;
   sender_id: string;
-  text_content: string;
+  text_content: string | null;
+  image_data_url: string | null;
   created_at: Date;
   sender_username: string;
   sender_display_name: string;

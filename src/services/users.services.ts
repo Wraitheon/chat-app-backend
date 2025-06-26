@@ -103,12 +103,6 @@ export const search_for_users = async (current_user_id: string, query: SearchUse
 
 type UserTypingDetails = { id: string; display_name: string };
 
-/**
- * Fetches minimal user details (id and display name) required for socket events.
- * This is more efficient than get_user_by_id for tasks like the "is typing" indicator.
- * @param user_id The ID of the user to fetch.
- * @returns An object with the user's id and display_name, or null if not found.
- */
 export const get_user_details = async (user_id: string): Promise<UserTypingDetails | null> => {
   const query = `
     SELECT id, display_name 
@@ -123,3 +117,19 @@ export const get_user_details = async (user_id: string): Promise<UserTypingDetai
 
   return user || null;
 }
+
+export const get_user_contact_ids = async (user_id: string): Promise<string[]> => {
+  const query = `
+    SELECT DISTINCT cm2.user_id
+    FROM chat_members AS cm1
+    JOIN chat_members AS cm2 ON cm1.chat_id = cm2.chat_id
+    WHERE cm1.user_id = :user_id AND cm2.user_id != :user_id;
+  `;
+
+  const results = await sequelize.query<{ user_id: string }>(query, {
+    replacements: { user_id },
+    type: QueryTypes.SELECT,
+  });
+
+  return results.map(r => r.user_id);
+};

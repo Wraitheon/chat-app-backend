@@ -37,3 +37,9 @@ export type ChatUpdatePayload = {
   group_name?: string;
   group_avatar_url?: string;
 };
+
+export type CreateChatInput = {
+  members: string[];
+  group_name?: string;
+  group_avatar_url?: string;
+};

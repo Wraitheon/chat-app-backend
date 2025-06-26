@@ -30,6 +30,7 @@ export const get_chat_messages = async (chat_id: string, current_user_id: string
       m.chat_id,
       m.sender_id,
       m.text_content,
+      m.image_data_url,
       m.created_at,
       u.username AS sender_username,
       u.display_name AS sender_display_name,
@@ -57,21 +58,24 @@ type SenderDetails = {
 export const create_message = async (
   sender_id: string,
   chat_id: string,
-  text_content: string
+  text_content?: string,
+  image_data_url?: string
 ): Promise<MessageWithSender> => {
-  // Use a transaction to ensure all or nothing is committed to the database.
   const t = await sequelize.transaction();
   try {
-    // --- THE FIX IS HERE ---
-    // Removed 'updated_at' from the column list and the VALUES list.
     const insert_query = `
-      INSERT INTO messages (sender_id, chat_id, text_content, created_at)
-      VALUES (:sender_id, :chat_id, :text_content, NOW())
+      INSERT INTO messages (sender_id, chat_id, text_content, image_data_url, created_at)
+      VALUES (:sender_id, :chat_id, :text_content, :image_data_url, NOW())
       RETURNING id, created_at;
     `;
 
     const new_message_rows = await sequelize.query<{ id: string, created_at: Date }>(insert_query, {
-      replacements: { sender_id, chat_id, text_content },
+      replacements: {
+        sender_id,
+        chat_id,
+        text_content: text_content || null,
+        image_data_url: image_data_url || null
+      },
       type: QueryTypes.SELECT,
       transaction: t,
     });
@@ -81,7 +85,6 @@ export const create_message = async (
     }
     const { id: new_message_id, created_at: new_message_created_at } = new_message_rows[0];
 
-    // The rest of the function remains the same
     const select_query = `
       SELECT
         u.username AS sender_username,
@@ -107,7 +110,8 @@ export const create_message = async (
       id: new_message_id,
       chat_id,
       sender_id,
-      text_content,
+      text_content: text_content || null,
+      image_data_url: image_data_url || null,
       created_at: new_message_created_at,
       ...sender_details,
     };
